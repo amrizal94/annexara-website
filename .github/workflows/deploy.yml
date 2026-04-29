@@ -1,0 +1,32 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete --exclude='.git*' --exclude='.well-known'
+          path: ./
+          remote_path: /www/wwwroot/annexara.id/
+          remote_host: 45.66.153.156
+          remote_user: root
+          remote_key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 45.66.153.156
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Deployed at $(date)"
+            ls -la /www/wwwroot/annexara.id/
