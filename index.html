@@ -105,7 +105,7 @@
       transition: box-shadow 0.3s;
     }
     nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
-    .nav-logo img { height: 36px; mix-blend-mode: multiply; }
+    .nav-logo img { height: 36px; }
     .nav-links { display: flex; gap: 32px; list-style: none; }
     .nav-links a { text-decoration: none; color: var(--black); font-size: 14px; font-weight: 500; transition: color 0.2s; }
     .nav-links a:hover { color: var(--green); }
@@ -219,11 +219,11 @@
     .hero-image {
       flex: 1; display: flex; align-items: center; justify-content: center;
       position: relative; z-index: 2;
-      mix-blend-mode: multiply;
     }
     .hero-image img {
       max-width: 520px; width: 100%;
-      filter: drop-shadow(0 30px 60px rgba(0,0,0,0.5));
+      filter: brightness(1.6) contrast(1.1) drop-shadow(0 30px 60px rgba(0,0,0,0.5));
+      mix-blend-mode: multiply;
       animation: float 4s ease-in-out infinite;
     }
     @keyframes float {
@@ -256,8 +256,8 @@
       align-items: center; max-width: 1200px; margin: 0 auto;
     }
     .about-img-wrap { position: relative; }
-    .about-img-wrap { position: relative; mix-blend-mode: multiply; }
-    .about-img-wrap img { width: 100%; border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.12); }
+    .about-img-wrap { position: relative; }
+    .about-img-wrap img { width: 100%; border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.12); filter: brightness(1.4) contrast(1.1); mix-blend-mode: multiply; }
     .about-badge {
       position: absolute; bottom: -20px; right: -20px;
       background: var(--green); color: var(--white);
