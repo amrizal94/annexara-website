@@ -474,6 +474,7 @@
     }
     @media (max-width: 640px) {
       .nav-links { display: none; }
+      .nav-auth { display: none; }
       .hamburger { display: flex; }
       .features-grid { grid-template-columns: 1fr; }
       .specs-grid { grid-template-columns: 1fr 1fr; }
@@ -524,6 +525,12 @@
     <li><a href="#kontak" class="mobile-link">Kontak</a></li>
   </ul>
   <a href="#kontak" class="mobile-cta mobile-link">Hubungi Kami</a>
+  <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">
+    <a href="/login.html" id="mGuestLogin" class="mobile-link" style="text-align:center; border:1px solid var(--green); border-radius:10px; color:var(--green); padding:11px;">Masuk</a>
+    <a href="/register.html" id="mGuestRegister" class="mobile-cta">Daftar Sekarang</a>
+    <a href="/dashboard.html" id="mUserAccount" class="mobile-link hidden" style="text-align:center;">Akun Saya</a>
+    <a href="#" id="mLogout" class="mobile-link hidden" style="text-align:center;">Keluar</a>
+  </div>
 </div>
 
 <!-- HERO -->
@@ -861,6 +868,11 @@
     $('guestLogin').classList.toggle('hidden', loggedIn);
     $('guestRegister').classList.toggle('hidden', loggedIn);
     $('userMenu').classList.toggle('hidden', !loggedIn);
+    // mobile menu mirror
+    $('mGuestLogin').classList.toggle('hidden', loggedIn);
+    $('mGuestRegister').classList.toggle('hidden', loggedIn);
+    $('mUserAccount').classList.toggle('hidden', !loggedIn);
+    $('mLogout').classList.toggle('hidden', !loggedIn);
     if (loggedIn) {
       let name = user.email;
       try { const s = await getDoc(doc(db, "users", user.uid)); if (s.exists()) name = s.data().username || name; } catch (_) {}
@@ -873,7 +885,9 @@
   document.addEventListener('click', (e) => {
     if (!$('userMenu').contains(e.target)) $('userDropdown').classList.add('hidden');
   });
-  $('navLogout').addEventListener('click', async (e) => { e.preventDefault(); await signOut(auth); location.reload(); });
+  const doLogout = async (e) => { e.preventDefault(); await signOut(auth); location.reload(); };
+  $('navLogout').addEventListener('click', doLogout);
+  $('mLogout').addEventListener('click', doLogout);
 </script>
 </body>
 </html>
