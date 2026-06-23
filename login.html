@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk — Annexara</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+</head>
+<body>
+<nav class="auth-nav"><a href="/"><img src="/assets/logo.png?v=2" alt="Annexara"></a></nav>
+<div class="auth-wrap">
+  <div class="card">
+    <h1 class="center">Masuk</h1>
+    <p class="sub center">Masuk ke akun Annexara Anda.</p>
+    <div id="msg" class="msg hidden"></div>
+    <form id="form">
+      <div class="field"><label>Username</label><input id="username" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="password" type="password" required autocomplete="current-password"></div>
+      <div class="row-between"><a class="link" href="/forgot-password.html">Lupa password?</a></div>
+      <button class="btn" type="submit" id="submit">Login</button>
+    </form>
+    <p class="foot">Belum punya akun? <a class="link" href="/register.html">Daftar sekarang</a></p>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "/firebase-init.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+const msg = $("msg");
+function show(text) { msg.textContent = text; msg.className = "msg err"; }
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = $("username").value.trim().toLowerCase();
+  const password = $("password").value;
+  $("submit").disabled = true;
+  try {
+    const snap = await getDoc(doc(db, "usernames", username));
+    if (!snap.exists()) throw new Error("Username atau password salah.");
+    const cred = await signInWithEmailAndPassword(auth, snap.data().email, password);
+    if (!cred.user.emailVerified) { location.href = "/verify-email.html"; return; }
+    location.href = "/";
+  } catch (err) {
+    show(/wrong-password|user-not-found|invalid-credential/.test(err.code || "")
+      ? "Username atau password salah." : (err.message || "Gagal masuk."));
+    $("submit").disabled = false;
+  }
+});
+</script>
+</body>
+</html>

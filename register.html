@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Akun — Annexara</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+</head>
+<body>
+<nav class="auth-nav"><a href="/"><img src="/assets/logo.png?v=2" alt="Annexara"></a></nav>
+<div class="auth-wrap">
+  <div class="card wide">
+    <div class="two-col">
+      <div>
+        <h1>Daftar Akun</h1>
+        <p class="sub">Aktifkan remote drone Anda. Satu serial number terikat ke satu akun.</p>
+        <div id="msg" class="msg hidden"></div>
+        <form id="form">
+          <div class="field"><label>Nama Lengkap</label><input id="fullName" required autocomplete="name"></div>
+          <div class="field"><label>Alamat</label><input id="address" required></div>
+          <div class="field"><label>Email</label><input id="email" type="email" required autocomplete="email"></div>
+          <div class="field"><label>Username</label><input id="username" required autocomplete="username"><div class="hint">Dipakai untuk login di web & remote drone.</div></div>
+          <div class="field"><label>Serial Number</label><input id="serial" required placeholder="X-XXXX-XXXX-XXXX"></div>
+          <div class="field"><label>Password</label><input id="password" type="password" required minlength="8" autocomplete="new-password"><div class="hint">Minimal 8 karakter.</div></div>
+          <button class="btn" type="submit" id="submit">Daftar</button>
+        </form>
+        <p class="foot">Sudah punya akun? <a class="link" href="/login.html">Masuk di sini</a></p>
+      </div>
+      <div>
+        <div class="info">
+          <h2>Keterangan Field</h2>
+          <div class="info-row"><span class="k">Nama Lengkap</span></div>
+          <div class="info-row"><span class="k">Email — untuk verifikasi & pemulihan akun</span></div>
+          <div class="info-row"><span class="k">Username — identitas login di remote</span></div>
+          <div class="info-row"><span class="k">Serial Number — tertera pada perangkat remote, format X-XXXX-XXXX-XXXX</span></div>
+          <div class="info-row"><span class="k">Password — dipakai login di remote drone</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "/firebase-init.js";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+const msg = $("msg");
+function show(text, ok = false) { msg.textContent = text; msg.className = "msg " + (ok ? "ok" : "err"); }
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fullName = $("fullName").value.trim();
+  const address  = $("address").value.trim();
+  const email    = $("email").value.trim();
+  const username = $("username").value.trim().toLowerCase();
+  const serial   = $("serial").value.trim().toUpperCase();
+  const password = $("password").value;
+
+  if (!/^[a-z0-9_]{3,20}$/.test(username)) return show("Username 3-20 karakter: huruf, angka, garis bawah.");
+  if (!/^X-\d{4}-\d{4}-\d{4}$/.test(serial)) return show("Format serial: X-XXXX-XXXX-XXXX.");
+
+  $("submit").disabled = true;
+  show("Memeriksa…", true);
+  try {
+    // ponytail: serial claim + username reservation are read-then-write — racy.
+    // Enforce uniqueness with Firestore security rules / a transaction in prod.
+    const serialRef = doc(db, "serials", serial);
+    const serialSnap = await getDoc(serialRef);
+    if (!serialSnap.exists()) throw new Error("Serial number tidak terdaftar. Cek perangkat remote Anda.");
+    if (serialSnap.data().claimed) throw new Error("Serial number ini sudah dipakai akun lain.");
+
+    const userRef = doc(db, "usernames", username);
+    if ((await getDoc(userRef)).exists()) throw new Error("Username sudah dipakai, pilih yang lain.");
+
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
+    await setDoc(doc(db, "users", uid), {
+      fullName, address, email, username, serial, createdAt: serverTimestamp(),
+    });
+    await setDoc(userRef, { uid, email });
+    await setDoc(serialRef, { claimed: true, uid, claimedAt: serverTimestamp() }, { merge: true });
+    await sendEmailVerification(cred.user);
+    location.href = "/verify-email.html";
+  } catch (err) {
+    show(err.code === "auth/email-already-in-use" ? "Email sudah terdaftar." : err.message);
+    $("submit").disabled = false;
+  }
+});
+</script>
+</body>
+</html>

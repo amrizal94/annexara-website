@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifikasi Email — Annexara</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+</head>
+<body>
+<nav class="auth-nav"><a href="/"><img src="/assets/logo.png?v=2" alt="Annexara"></a></nav>
+<div class="auth-wrap">
+  <div class="card center">
+    <div class="icon-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+    </div>
+    <h1>Cek Email Anda</h1>
+    <p class="sub">Kami telah mengirim link verifikasi ke <strong id="email">email Anda</strong>. Buka email dan klik link untuk mengaktifkan akun.</p>
+    <div id="msg" class="msg hidden"></div>
+    <button class="btn" id="recheck">Saya sudah verifikasi → Masuk</button>
+    <div style="height:10px"></div>
+    <button class="btn btn-ghost" id="resend">Kirim Ulang Email</button>
+    <p class="foot">Tidak menerima email? Periksa folder Spam.</p>
+    <p class="foot"><a class="link" href="/login.html">← Kembali ke halaman login</a></p>
+  </div>
+</div>
+
+<script type="module">
+import { auth } from "/firebase-init.js";
+import { onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const $ = id => document.getElementById(id);
+const msg = $("msg");
+function show(text, ok) { msg.textContent = text; msg.className = "msg " + (ok ? "ok" : "err"); }
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) { location.href = "/login.html"; return; }
+  if (user.emailVerified) { location.href = "/"; return; }
+  $("email").textContent = user.email;
+});
+
+$("resend").addEventListener("click", async () => {
+  try { await sendEmailVerification(auth.currentUser); show("Email verifikasi dikirim ulang.", true); }
+  catch (e) { show(e.message); }
+});
+
+$("recheck").addEventListener("click", async () => {
+  await auth.currentUser.reload();
+  if (auth.currentUser.emailVerified) location.href = "/";
+  else show("Email belum terverifikasi. Klik link di email dulu.");
+});
+</script>
+</body>
+</html>

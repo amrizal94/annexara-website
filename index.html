@@ -149,6 +149,28 @@
       text-decoration: none; transition: background 0.2s, transform 0.1s;
     }
     .nav-cta:hover { background: var(--green-dark); transform: translateY(-1px); }
+    /* auth nav */
+    .nav-auth { display: flex; align-items: center; gap: 14px; }
+    .nav-login { text-decoration: none; color: var(--black); font-size: 14px; font-weight: 600; }
+    .nav-login:hover { color: var(--green); }
+    .user-menu { position: relative; }
+    .user-btn {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      background: none; border: none; font: inherit; font-weight: 600; font-size: 14px; color: var(--black);
+    }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; text-transform: uppercase;
+    }
+    .user-dropdown {
+      position: absolute; right: 0; top: 42px; min-width: 180px;
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12); padding: 6px; display: flex; flex-direction: column;
+    }
+    .user-dropdown .ud-label { font-size: 11px; color: var(--gray); padding: 8px 10px 4px; }
+    .user-dropdown a { padding: 9px 10px; border-radius: 7px; text-decoration: none; color: var(--black); font-size: 14px; font-weight: 500; }
+    .user-dropdown a:hover { background: var(--green-pale); color: var(--green); }
+    .hidden { display: none !important; }
     .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; z-index: 200; }
     .hamburger span { width: 24px; height: 2px; background: var(--black); border-radius: 2px; transition: 0.3s; }
     .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
@@ -475,7 +497,18 @@
     <li><a href="#cara-kerja">Cara Kerja</a></li>
     <li><a href="#kontak">Kontak</a></li>
   </ul>
-  <a href="#kontak" class="nav-cta">Hubungi Kami</a>
+  <div class="nav-auth" id="navAuth">
+    <a href="/login.html" class="nav-login" id="guestLogin">Masuk</a>
+    <a href="/register.html" class="nav-cta" id="guestRegister">Daftar Sekarang</a>
+    <div class="user-menu hidden" id="userMenu">
+      <button class="user-btn" id="userBtn"><span class="user-avatar" id="userAvatar">A</span><span id="userName">user</span> ▾</button>
+      <div class="user-dropdown hidden" id="userDropdown">
+        <span class="ud-label">Masuk sebagai</span>
+        <a href="/dashboard.html">Akun Saya</a>
+        <a href="#" id="navLogout">Keluar</a>
+      </div>
+    </div>
+  </div>
   <div class="hamburger" id="hamburger">
     <span></span><span></span><span></span>
   </div>
@@ -814,6 +847,33 @@
     el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
     observer.observe(el);
   });
+</script>
+
+<!-- Auth state: swap Masuk/Daftar for a user dropdown when logged in -->
+<script type="module">
+  import { auth, db } from "/firebase-init.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const $ = id => document.getElementById(id);
+  onAuthStateChanged(auth, async (user) => {
+    const loggedIn = user && user.emailVerified;
+    $('guestLogin').classList.toggle('hidden', loggedIn);
+    $('guestRegister').classList.toggle('hidden', loggedIn);
+    $('userMenu').classList.toggle('hidden', !loggedIn);
+    if (loggedIn) {
+      let name = user.email;
+      try { const s = await getDoc(doc(db, "users", user.uid)); if (s.exists()) name = s.data().username || name; } catch (_) {}
+      $('userName').textContent = name;
+      $('userAvatar').textContent = (name[0] || 'A');
+    }
+  });
+
+  $('userBtn').addEventListener('click', () => $('userDropdown').classList.toggle('hidden'));
+  document.addEventListener('click', (e) => {
+    if (!$('userMenu').contains(e.target)) $('userDropdown').classList.add('hidden');
+  });
+  $('navLogout').addEventListener('click', async (e) => { e.preventDefault(); await signOut(auth); location.reload(); });
 </script>
 </body>
 </html>

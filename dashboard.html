@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akun Saya — Annexara</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/auth.css">
+</head>
+<body>
+<nav class="auth-nav" style="justify-content:space-between">
+  <a href="/"><img src="/assets/logo.png?v=2" alt="Annexara"></a>
+  <span style="font-size:14px">Halo, <strong id="navUser">…</strong> &nbsp;
+    <a href="#" id="logout" class="link">Keluar</a></span>
+</nav>
+<div class="auth-wrap" style="align-items:flex-start">
+  <div class="card wide">
+    <h1>Akun Saya</h1>
+    <p class="sub">Informasi akun dan remote drone terdaftar.</p>
+    <div id="msg" class="msg hidden"></div>
+    <div class="two-col">
+      <div class="info">
+        <h2>Profil</h2>
+        <div class="info-row"><span class="k">Nama Lengkap</span><span class="v" id="fullName">—</span></div>
+        <div class="info-row"><span class="k">Email</span><span class="v" id="email">—</span></div>
+        <div class="info-row"><span class="k">Username</span><span class="v" id="username">—</span></div>
+        <div class="info-row"><span class="k">Bergabung</span><span class="v" id="joined">—</span></div>
+        <div class="info-row"><button class="btn btn-ghost" id="changePw" style="margin:8px 0">Ubah Password</button></div>
+      </div>
+      <div class="info">
+        <h2>Remote Drone <span class="badge">Aktif</span></h2>
+        <div class="info-row"><span class="k">Serial Number</span><span class="v" id="serial">—</span></div>
+        <div class="info-row"><span class="k">Alamat</span><span class="v" id="address">—</span></div>
+      </div>
+    </div>
+    <p class="sub">Buka aplikasi pada remote drone, masukkan username dan password untuk mulai mengoperasikan drone.</p>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "/firebase-init.js";
+import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = "/login.html"; return; }
+  if (!user.emailVerified) { location.href = "/verify-email.html"; return; }
+  const snap = await getDoc(doc(db, "users", user.uid));
+  const d = snap.exists() ? snap.data() : {};
+  $("navUser").textContent = d.username || user.email;
+  $("fullName").textContent = d.fullName || "—";
+  $("email").textContent = d.email || user.email;
+  $("username").textContent = d.username || "—";
+  $("serial").textContent = d.serial || "—";
+  $("address").textContent = d.address || "—";
+  if (d.createdAt?.toDate) $("joined").textContent = d.createdAt.toDate().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+});
+
+$("logout").addEventListener("click", async (e) => { e.preventDefault(); await signOut(auth); location.href = "/"; });
+
+$("changePw").addEventListener("click", async () => {
+  await sendPasswordResetEmail(auth, auth.currentUser.email);
+  const msg = $("msg"); msg.textContent = "Link ubah password dikirim ke email Anda."; msg.className = "msg ok";
+});
+</script>
+</body>
+</html>
