@@ -14,7 +14,7 @@ jobs:
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avz --delete --exclude='.git*' --exclude='.well-known' --exclude='assets/'
+          switches: -avz --delete --exclude='.git*' --exclude='.well-known' --exclude='assets/' --exclude='.user.ini' --exclude='.htaccess' --exclude='404.html' --exclude='502.html'
           path: ./
           remote_path: /www/wwwroot/annexara.id/
           remote_host: 45.66.153.156
